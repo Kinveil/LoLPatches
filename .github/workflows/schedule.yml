@@ -34,6 +34,7 @@ jobs:
         uses: actions/upload-pages-artifact@v1
         with:
           name: patches.json
+          path: patches.json
 
   deploy:
     needs: build
