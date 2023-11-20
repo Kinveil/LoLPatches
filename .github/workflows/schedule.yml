@@ -11,6 +11,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      artifact-path: patches.json
 
     steps:
       - uses: actions/checkout@v2
@@ -25,15 +27,27 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Run Python script
+      - name: Run Python script and create patches.json
         run: python main.py
 
+      - name: Upload patches.json as an artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: patches
+          path: patches.json
+
+  deploy:
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to GitHub Pages
-        run: |
-          git fetch
-          git checkout gh-pages
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git add patches.json
-          git commit -m "Update patches JSON"
-          git push https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/junioryono/LoLPatches.git gh-pages
+        id: deployment
+        uses: actions/deploy-pages@v2
