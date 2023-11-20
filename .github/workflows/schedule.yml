@@ -30,22 +30,34 @@ jobs:
       - name: Run Python script and create patches.json
         run: python main.py
 
-      - name: Upload patches.json as an artifact
-        uses: actions/upload-pages-artifact@v1
-        with:
-          name: patches.json
-          path: .
+      - name: Create tar and gzip archive
+        run: |
+          mkdir site
+          mv patches.json site/
+          tar -czvf site.tar.gz site
 
+      - name: Upload the gzip archive as an artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          name: github-pages
+          path: site.tar.gz
+
+  # Deploy job
   deploy:
+    # Add a dependency to the build job
     needs: build
+
+    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
     permissions:
       pages: write
       id-token: write
 
+    # Deploy to the github-pages environment
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
+    # Specify runner + deployment step
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to GitHub Pages
