@@ -34,14 +34,13 @@ jobs:
         run: |
           mkdir site
           mv patches.json site/
-          tar -cvf site.tar site
-          gzip site.tar
+          tar -czvf site.tar.gz site
 
       - name: Upload the gzip archive as an artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          name: github-pages
-          path: site.tar.gz
+          name: site.tar.gz
+          path: .
 
   # Deploy job
   deploy:
