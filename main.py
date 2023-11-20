@@ -109,10 +109,6 @@ def fetch_season_details(title):
             patch = patch.find('a').get_text()
             date = date.get_text()
 
-            # Print the patch and date
-            print("patch", patch)
-            print("date", date)
-
             # Remove the starting V from patch if it exists
             if patch[0] == 'V':
                 patch = patch[1:]

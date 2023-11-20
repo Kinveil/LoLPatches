@@ -30,7 +30,7 @@ jobs:
       - name: Run Python script and create patches.json
         run: python main.py
 
-      - name: Create tar and gzip archive
+      - name: Create folder for GitHub Pages
         run: |
           mkdir github-pages
           mv patches.json github-pages/
