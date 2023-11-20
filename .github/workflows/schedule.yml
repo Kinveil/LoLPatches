@@ -36,4 +36,4 @@ jobs:
           git config user.email "actions@github.com"
           git add patches.json
           git commit -m "Update patches JSON"
-          git push origin gh-pages
+          git push https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/junioryono/LoLPatches.git gh-pages
