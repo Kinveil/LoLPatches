@@ -30,11 +30,18 @@ jobs:
       - name: Run Python script and create patches.json
         run: python main.py
 
-      - name: Upload patches.json as an artifact
+      - name: Create tar and gzip archive
+        run: |
+          mkdir site
+          mv patches.json site/
+          tar -cvf site.tar site
+          gzip site.tar
+
+      - name: Upload the gzip archive as an artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          name: patches.json
-          path: .
+          name: github-pages
+          path: site.tar.gz
 
   # Deploy job
   deploy:
