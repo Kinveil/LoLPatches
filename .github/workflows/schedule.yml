@@ -32,9 +32,8 @@ jobs:
 
       - name: Create tar and gzip archive
         run: |
-          mkdir site
-          mv patches.json site/
-          tar -czvf github-pages site
+          mkdir github-pages
+          mv patches.json github-pages/
 
       - name: Upload the gzip archive as an artifact
         uses: actions/upload-pages-artifact@v2
