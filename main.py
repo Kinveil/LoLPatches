@@ -15,7 +15,7 @@ def extract_patch_titles(data):
     #             "*": "<div>
     #                     ....
     #                     <h2>
-    #                         <span class="mw-headline" id="List_of_Patches">List of Patches</span>
+    #                         <span class="mw-headline" id="List_of_seasons">List of Patches</span>
     #                     </h2>
     #                     <ul>
     #                         <li>
