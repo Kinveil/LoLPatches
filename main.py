@@ -40,7 +40,7 @@ def extract_patch_titles(data):
 
     text = data['parse']['text']['*']
     soup = BeautifulSoup(text, 'html.parser')
-    patch_list = soup.find('span', {'id': 'List_of_Patches'}).find_next('ul').find_all('a')
+    patch_list = soup.find('span', {'id': 'List_of_seasons'}).find_next('ul').find_all('a')
 
     patch_urls = []
     for patch in patch_list:
