@@ -1,3 +1,3 @@
 # LolPatches
 
-Available at https://junioryono.github.io/LoLPatches/github-pages/patches.json
+Available at https://kinveil-engineering-analysis.github.io/LoLPatches/github-pages/patches.json
