@@ -6,7 +6,6 @@ import re
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
 
 def fetch_patch_schedule():
     """Fetch and parse the patch schedule from Riot's support page"""
@@ -14,19 +13,17 @@ def fetch_patch_schedule():
     
     # Set up Chrome options
     chrome_options = Options()
-    chrome_options.add_argument('--headless')  # Run in headless mode
+    chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
     chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--disable-software-rasterizer')
     chrome_options.add_argument('--window-size=1920,1080')
     chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
     
     try:
         # Initialize the driver
-        driver = webdriver.Chrome(
-            service=Service(ChromeDriverManager().install()),
-            options=chrome_options
-        )
+        driver = webdriver.Chrome(options=chrome_options)
         
         # Get the page
         driver.get(url)

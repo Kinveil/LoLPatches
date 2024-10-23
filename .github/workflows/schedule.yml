@@ -23,10 +23,11 @@ jobs:
         with:
           python-version: 3.8
 
-      - name: Install Chrome
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
+      - name: Setup Chrome and ChromeDriver
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Setup ChromeDriver
+        uses: nanasess/setup-chromedriver@v2
 
       - name: Install dependencies
         run: |
@@ -34,7 +35,10 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Run Python script and create patches.json
-        run: python main.py
+        run: |
+          export DISPLAY=:99
+          sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
+          python main.py
 
       - name: Create folder for GitHub Pages
         run: |
@@ -47,7 +51,6 @@ jobs:
           name: github-pages
           path: github-pages
 
-  # Deploy job
   deploy:
     needs: build
 
