@@ -8,9 +8,19 @@ import re
 def fetch_patch_schedule():
     """Fetch and parse the patch schedule from Riot's support page"""
     url = 'https://support-leagueoflegends.riotgames.com/hc/en-us/articles/360018987893-Patch-Schedule-League-of-Legends'
+
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'DNT': '1',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1'
+    }
     
     # Fetch the page
-    response = requests.get(url)
+    response = requests.get(url, headers=headers)
     response.raise_for_status()
     
     # Parse HTML
@@ -123,6 +133,7 @@ def main():
         print(f"Successfully processed {len(patch_data['patches'])} patches")
     else:
         print("Failed to create patch data")
+        exit(1)
 
 if __name__ == '__main__':
     main()
