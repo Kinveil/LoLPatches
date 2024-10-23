@@ -1,74 +1,93 @@
 import json
 from datetime import datetime
 import pytz
-import cloudscraper
 from bs4 import BeautifulSoup
 import re
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 
 def fetch_patch_schedule():
     """Fetch and parse the patch schedule from Riot's support page"""
     url = 'https://support-leagueoflegends.riotgames.com/hc/en-us/articles/360018987893-Patch-Schedule-League-of-Legends'
     
-    # Create a scraper instance
-    scraper = cloudscraper.create_scraper(
-        browser={
-            'browser': 'chrome',
-            'platform': 'windows',
-            'mobile': False
-        }
-    )
+    # Set up Chrome options
+    chrome_options = Options()
+    chrome_options.add_argument('--headless')  # Run in headless mode
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--window-size=1920,1080')
+    chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
     
-    # Fetch the page
-    response = scraper.get(url)
-    response.raise_for_status()
-    
-    # Parse HTML
-    soup = BeautifulSoup(response.text, 'html.parser')
-    
-    # Find the table containing patch schedule
-    table = soup.find('table')
-    if not table:
-        raise Exception("Couldn't find patch schedule table")
-    
-    patch_schedule = []
-    
-    # Parse table rows
-    for row in table.find_all('tr')[1:]:  # Skip header row
-        cells = row.find_all(['td', 'th'])
-        if len(cells) >= 2:
-            patch = cells[0].get_text().strip()
-            date_str = cells[1].get_text().strip()
-            
-            # Clean up the patch number
-            patch = re.sub(r'\s+', '', patch)  # Remove whitespace
-            
-            # Parse the date string
-            try:
-                # Handle various date formats
-                date_str = re.sub(r'\s+', ' ', date_str)  # Normalize whitespace
-                date_str = date_str.replace(',', '')  # Remove commas
+    try:
+        # Initialize the driver
+        driver = webdriver.Chrome(
+            service=Service(ChromeDriverManager().install()),
+            options=chrome_options
+        )
+        
+        # Get the page
+        driver.get(url)
+        
+        # Get the page source
+        page_source = driver.page_source
+        
+        # Close the driver
+        driver.quit()
+        
+        # Parse HTML
+        soup = BeautifulSoup(page_source, 'html.parser')
+        
+        # Find the table containing patch schedule
+        table = soup.find('table')
+        if not table:
+            raise Exception("Couldn't find patch schedule table")
+        
+        patch_schedule = []
+        
+        # Parse table rows
+        for row in table.find_all('tr')[1:]:  # Skip header row
+            cells = row.find_all(['td', 'th'])
+            if len(cells) >= 2:
+                patch = cells[0].get_text().strip()
+                date_str = cells[1].get_text().strip()
                 
-                # Convert month abbreviations to full names
-                month_map = {
-                    'Jan': 'January', 'Feb': 'February', 'Mar': 'March',
-                    'Apr': 'April', 'May': 'May', 'Jun': 'June',
-                    'Jul': 'July', 'Aug': 'August', 'Sep': 'September',
-                    'Sept': 'September', 'Oct': 'October', 'Nov': 'November',
-                    'Dec': 'December'
-                }
+                # Clean up the patch number
+                patch = re.sub(r'\s+', '', patch)  # Remove whitespace
                 
-                for abbr, full in month_map.items():
-                    date_str = date_str.replace(abbr, full)
-                
-                # Parse date
-                date_obj = datetime.strptime(date_str, '%A %B %d %Y')
-                
-                patch_schedule.append((patch, date_obj.strftime('%Y-%m-%d')))
-            except ValueError as e:
-                print(f"Warning: Could not parse date '{date_str}' for patch {patch}: {e}")
-                continue
-    
-    return patch_schedule
+                # Parse the date string
+                try:
+                    # Handle various date formats
+                    date_str = re.sub(r'\s+', ' ', date_str)  # Normalize whitespace
+                    date_str = date_str.replace(',', '')  # Remove commas
+                    
+                    # Convert month abbreviations to full names
+                    month_map = {
+                        'Jan': 'January', 'Feb': 'February', 'Mar': 'March',
+                        'Apr': 'April', 'May': 'May', 'Jun': 'June',
+                        'Jul': 'July', 'Aug': 'August', 'Sep': 'September',
+                        'Sept': 'September', 'Oct': 'October', 'Nov': 'November',
+                        'Dec': 'December'
+                    }
+                    
+                    for abbr, full in month_map.items():
+                        date_str = date_str.replace(abbr, full)
+                    
+                    # Parse date
+                    date_obj = datetime.strptime(date_str, '%A %B %d %Y')
+                    
+                    patch_schedule.append((patch, date_obj.strftime('%Y-%m-%d')))
+                except ValueError as e:
+                    print(f"Warning: Could not parse date '{date_str}' for patch {patch}: {e}")
+                    continue
+        
+        return patch_schedule
+        
+    except Exception as e:
+        print(f"Error during web scraping: {e}")
+        raise
 
 def create_patch_data():
     """Create the complete patch data structure with timestamps and region shifts"""
