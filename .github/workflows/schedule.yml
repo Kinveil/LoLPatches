@@ -12,8 +12,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    outputs:
-      artifact-path: patches.json
 
     steps:
       - uses: actions/checkout@v2
@@ -40,30 +38,28 @@ jobs:
           sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
           python main.py
 
-      - name: Create folder for GitHub Pages
+      - name: Create Pages content
         run: |
-          mkdir github-pages
-          mv patches.json github-pages/
+          mkdir -p github-pages
+          cp patches.json github-pages/
+          # Create an index.html that redirects to patches.json
+          echo '<meta http-equiv="refresh" content="0; url=patches.json">' > github-pages/index.html
 
-      - name: Upload the gzip archive as an artifact
-        uses: actions/upload-pages-artifact@v2
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: github-pages
           path: github-pages
 
   deploy:
     needs: build
-
     permissions:
       pages: write
       id-token: write
-
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
