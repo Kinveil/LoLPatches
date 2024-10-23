@@ -1,3 +1,3 @@
 # LolPatches
 
-Available at https://kinveil.github.io/LoLPatches/github-pages/patches.json
+Available at https://kinveil.github.io/LoLPatches/patches.json
