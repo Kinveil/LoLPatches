@@ -98,11 +98,12 @@ def create_patch_data():
     # Convert dates to timestamps
     patches = []
     pacific_tz = pytz.timezone('America/Los_Angeles')
+    utc = pytz.UTC
     
     for patch, date_str in patch_schedule:
-        # Parse the date and set it to 12 PM Pacific time
+        # Parse the date and set it to 7 AM UTC (midnight Pacific)
         date = datetime.strptime(date_str, '%Y-%m-%d')
-        date = pacific_tz.localize(date.replace(hour=12))
+        date = utc.localize(date.replace(hour=7))  # 7 AM UTC = midnight Pacific
         
         patches.append({
             'name': patch,
