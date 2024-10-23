@@ -97,17 +97,17 @@ def create_patch_data():
 
     # Convert dates to timestamps
     patches = []
-    pacific_tz = pytz.timezone('America/Los_Angeles')
-    utc = pytz.UTC
+    pacific = pytz.timezone('America/Los_Angeles')
     
     for patch, date_str in patch_schedule:
-        # Parse the date and set it to 7 AM UTC (midnight Pacific)
-        date = datetime.strptime(date_str, '%Y-%m-%d')
-        date = utc.localize(date.replace(hour=7))  # 7 AM UTC = midnight Pacific
+        # Parse the date and get midnight Pacific time
+        naive_date = datetime.strptime(date_str, '%Y-%m-%d')
+        pacific_date = pacific.localize(naive_date)
+        utc_date = pacific_date.astimezone(pytz.UTC)
         
         patches.append({
             'name': patch,
-            'start': int(date.timestamp())
+            'start': int(utc_date.timestamp())
         })
 
     # Region shifts in seconds
