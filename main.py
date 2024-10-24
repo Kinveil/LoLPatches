@@ -95,6 +95,9 @@ def create_patch_data():
         print("Falling back to most recent known schedule...")
         return None
 
+    # Get current UTC timestamp
+    current_time = int(datetime.now(pytz.UTC).timestamp())
+
     # Convert dates to timestamps
     patches = []
     pacific = pytz.timezone('America/Los_Angeles')
@@ -104,6 +107,11 @@ def create_patch_data():
         naive_date = datetime.strptime(date_str, '%Y-%m-%d')
         pacific_date = pacific.localize(naive_date)
         utc_date = pacific_date.astimezone(pytz.UTC)
+        timestamp = int(utc_date.timestamp())
+
+        # If the time is greater than now, skip it
+        if timestamp > current_time:
+            continue
         
         patches.append({
             'name': patch,
