@@ -84,6 +84,9 @@ def create_patch_data():
         print(f"Error fetching patch schedule: {e}")
         return None
 
+    # Get current UTC timestamp
+    current_time = int(datetime.now(pytz.UTC).timestamp())
+
     # Convert dates to timestamps
     patches = []
     pacific = pytz.timezone('America/Los_Angeles')
@@ -94,6 +97,10 @@ def create_patch_data():
         pacific_date = pacific.localize(naive_date.replace(hour=13))  # 1 PM Pacific
         utc_date = pacific_date.astimezone(pytz.UTC)
         timestamp = int(utc_date.timestamp())
+        
+        # Skip future patches
+        if timestamp > current_time:
+            continue
         
         patches.append({
             'name': patch,
