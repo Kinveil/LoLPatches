@@ -43,16 +43,17 @@ def fetch_patch_schedule():
             raise Exception("Couldn't find patch schedule table")
         
         patch_schedule = []
+        patch_counter = 1  # Initialize counter for patch numbers
         
         # Parse table rows
         for row in table.find_all('tr')[1:]:  # Skip header row
             cells = row.find_all(['td', 'th'])
             if len(cells) >= 2:
-                patch = cells[0].get_text().strip()
                 date_str = cells[1].get_text().strip()
                 
-                # Clean up the patch number
-                patch = re.sub(r'\s+', '', patch)
+                # Create new patch number format (15.1, 15.2, etc.)
+                patch = f"15.{patch_counter}"
+                patch_counter += 1
                 
                 # Extract date and handle cases with "(Thursday)" notation
                 date_str = re.sub(r'\s*\([^)]*\)', '', date_str).strip()
