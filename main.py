@@ -3,39 +3,12 @@ from datetime import datetime
 import pytz
 from bs4 import BeautifulSoup
 import re
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
 
-def fetch_patch_schedule():
-    """Fetch and parse the patch schedule from Riot's support page"""
-    url = 'https://support-leagueoflegends.riotgames.com/hc/en-us/articles/360018987893-Patch-Schedule-League-of-Legends'
-    
-    # Set up Chrome options
-    chrome_options = Options()
-    chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--disable-dev-shm-usage')
-    chrome_options.add_argument('--disable-gpu')
-    chrome_options.add_argument('--disable-software-rasterizer')
-    chrome_options.add_argument('--window-size=1920,1080')
-    chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
-    
+def fetch_patch_schedule(html_content):
+    """Parse the patch schedule from provided HTML content"""
     try:
-        # Initialize the driver
-        driver = webdriver.Chrome(options=chrome_options)
-        
-        # Get the page
-        driver.get(url)
-        
-        # Get the page source
-        page_source = driver.page_source
-        
-        # Close the driver
-        driver.quit()
-        
         # Parse HTML
-        soup = BeautifulSoup(page_source, 'html.parser')
+        soup = BeautifulSoup(html_content, 'html.parser')
         
         # Find the table containing patch schedule
         table = soup.find('table')
@@ -52,28 +25,17 @@ def fetch_patch_schedule():
                 date_str = cells[1].get_text().strip()
                 
                 # Clean up the patch number
-                patch = re.sub(r'\s+', '', patch)  # Remove whitespace
+                patch = re.sub(r'\s+', '', patch)
                 
-                # Parse the date string
+                # Extract date and handle cases with "(Thursday)" notation
+                date_str = re.sub(r'\s*\([^)]*\)', '', date_str).strip()
+                
                 try:
-                    # Handle various date formats
-                    date_str = re.sub(r'\s+', ' ', date_str)  # Normalize whitespace
-                    date_str = date_str.replace(',', '')  # Remove commas
-                    
-                    # Convert month abbreviations to full names
-                    month_map = {
-                        'Jan': 'January', 'Feb': 'February', 'Mar': 'March',
-                        'Apr': 'April', 'May': 'May', 'Jun': 'June',
-                        'Jul': 'July', 'Aug': 'August', 'Sep': 'September',
-                        'Sept': 'September', 'Oct': 'October', 'Nov': 'November',
-                        'Dec': 'December'
-                    }
-                    
-                    for abbr, full in month_map.items():
-                        date_str = date_str.replace(abbr, full)
-                    
-                    # Parse date
-                    date_obj = datetime.strptime(date_str, '%A %B %d %Y')
+                    # Parse date - handle both formats
+                    try:
+                        date_obj = datetime.strptime(date_str, '%B %d, %Y')
+                    except ValueError:
+                        date_obj = datetime.strptime(date_str, '%B %d %Y')
                     
                     patch_schedule.append((patch, date_obj.strftime('%Y-%m-%d')))
                 except ValueError as e:
@@ -83,16 +45,15 @@ def fetch_patch_schedule():
         return patch_schedule
         
     except Exception as e:
-        print(f"Error during web scraping: {e}")
+        print(f"Error during parsing: {e}")
         raise
 
-def create_patch_data():
+def create_patch_data(html_content):
     """Create the complete patch data structure with timestamps and region shifts"""
     try:
-        patch_schedule = fetch_patch_schedule()
+        patch_schedule = fetch_patch_schedule(html_content)
     except Exception as e:
         print(f"Error fetching patch schedule: {e}")
-        print("Falling back to most recent known schedule...")
         return None
 
     # Get current UTC timestamp
@@ -103,20 +64,19 @@ def create_patch_data():
     pacific = pytz.timezone('America/Los_Angeles')
     
     for patch, date_str in patch_schedule:
-        # Parse the date and get midnight Pacific time
+        # Parse the date and set to 1 PM Pacific time (usual patch time)
         naive_date = datetime.strptime(date_str, '%Y-%m-%d')
-        pacific_date = pacific.localize(naive_date)
+        pacific_date = pacific.localize(naive_date.replace(hour=13))  # 1 PM Pacific
         utc_date = pacific_date.astimezone(pytz.UTC)
         timestamp = int(utc_date.timestamp())
-
-        # If the time is greater than now, skip it
-        if timestamp > current_time:
-            continue
         
         patches.append({
             'name': patch,
-            'start': int(utc_date.timestamp())
+            'start': timestamp
         })
+
+    # Sort patches by timestamp
+    patches.sort(key=lambda x: x['start'])
 
     # Region shifts in seconds
     shifts = {
@@ -147,14 +107,23 @@ def create_patch_data():
     return patch_data
 
 def main():
+    # Read the HTML content from a file
+    with open('paste.txt', 'r', encoding='utf-8') as f:
+        html_content = f.read()
+    
     # Fetch and process patch data
-    patch_data = create_patch_data()
+    patch_data = create_patch_data(html_content)
     
     if patch_data:
         # Save to JSON file
         with open('patches.json', 'w') as f:
             json.dump(patch_data, f, indent=2)
         print(f"Successfully processed {len(patch_data['patches'])} patches")
+        
+        # Print the patches for verification
+        for patch in patch_data['patches']:
+            patch_time = datetime.fromtimestamp(patch['start'], pytz.UTC)
+            print(f"{patch['name']}: {patch_time.strftime('%Y-%m-%d %H:%M:%S')} UTC")
     else:
         print("Failed to create patch data")
         exit(1)
