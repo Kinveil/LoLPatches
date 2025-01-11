@@ -3,12 +3,39 @@ from datetime import datetime
 import pytz
 from bs4 import BeautifulSoup
 import re
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 
-def fetch_patch_schedule(html_content):
-    """Parse the patch schedule from provided HTML content"""
+def fetch_patch_schedule():
+    """Fetch and parse the patch schedule from Riot's support page"""
+    url = 'https://support-leagueoflegends.riotgames.com/hc/en-us/articles/360018987893-Patch-Schedule-League-of-Legends'
+    
+    # Set up Chrome options
+    chrome_options = Options()
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--disable-software-rasterizer')
+    chrome_options.add_argument('--window-size=1920,1080')
+    chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+    
     try:
+        # Initialize the driver
+        driver = webdriver.Chrome(options=chrome_options)
+        
+        # Get the page
+        driver.get(url)
+        
+        # Get the page source
+        page_source = driver.page_source
+        
+        # Close the driver
+        driver.quit()
+        
         # Parse HTML
-        soup = BeautifulSoup(html_content, 'html.parser')
+        soup = BeautifulSoup(page_source, 'html.parser')
         
         # Find the table containing patch schedule
         table = soup.find('table')
@@ -45,19 +72,16 @@ def fetch_patch_schedule(html_content):
         return patch_schedule
         
     except Exception as e:
-        print(f"Error during parsing: {e}")
+        print(f"Error during web scraping: {e}")
         raise
 
-def create_patch_data(html_content):
+def create_patch_data():
     """Create the complete patch data structure with timestamps and region shifts"""
     try:
-        patch_schedule = fetch_patch_schedule(html_content)
+        patch_schedule = fetch_patch_schedule()
     except Exception as e:
         print(f"Error fetching patch schedule: {e}")
         return None
-
-    # Get current UTC timestamp
-    current_time = int(datetime.now(pytz.UTC).timestamp())
 
     # Convert dates to timestamps
     patches = []
@@ -107,12 +131,8 @@ def create_patch_data(html_content):
     return patch_data
 
 def main():
-    # Read the HTML content from a file
-    with open('paste.txt', 'r', encoding='utf-8') as f:
-        html_content = f.read()
-    
     # Fetch and process patch data
-    patch_data = create_patch_data(html_content)
+    patch_data = create_patch_data()
     
     if patch_data:
         # Save to JSON file
